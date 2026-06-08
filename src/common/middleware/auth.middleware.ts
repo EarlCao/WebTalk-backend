@@ -20,9 +20,14 @@ const getBearerToken = (authorizationHeader?: string): string | null => {
   return token;
 };
 
-const isValidPayload = (payload: string | jwt.JwtPayload): payload is jwt.JwtPayload & AuthTokenPayload => {
-  return typeof payload !== "string" && typeof payload.userId === "number" && typeof payload.email === "string";
-};
+const isValidPayload = (
+  payload: string | jwt.JwtPayload,
+): payload is jwt.JwtPayload & AuthTokenPayload =>
+  typeof payload !== "string" &&
+  typeof payload.userId === "string" &&
+  payload.userId.length > 0 &&
+  typeof payload.email === "string" &&
+  payload.email.length > 0;
 
 export const authMiddleware = (request: Request, response: Response, next: NextFunction): void => {
   const token = getBearerToken(request.headers.authorization);

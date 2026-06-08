@@ -1,5 +1,5 @@
 export interface AuthTokenPayload {
-  userId: number;
+  userId: string;
   email: string;
   expiresAt?: number;
 }
