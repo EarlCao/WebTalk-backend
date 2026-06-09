@@ -10,7 +10,7 @@ import type { RegisterInput, LoginInput } from "./auth.schema";
 const userRepository = new UserRepository();
 
 const signToken = (userId: string, email: string): string => {
-  return jwt.sign({ userId, email }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
+  return jwt.sign({ userId, email }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN as any });
 };
 
 export class AuthService {
