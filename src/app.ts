@@ -6,7 +6,7 @@ import { errorMiddleware } from "./common/middleware/error.middleware";
 import { notFoundMiddleware } from "./common/middleware/not-found.middleware";
 import { sendSuccess } from "./common/response";
 import { env } from "./config/env";
-import { userRoutes } from "./modules/users/user.routes";
+import routes from "./routes";
 
 export const createApp = (): express.Express => {
   const app = express();
@@ -30,7 +30,7 @@ export const createApp = (): express.Express => {
   });
 
   // API routes
-  app.use("/api/users", userRoutes);
+  app.use("/api", routes);
 
   // 404 + error handler (must be last)
   app.use(notFoundMiddleware);
