@@ -121,7 +121,7 @@ export class UserController {
       const { id } = req.params;
 
       // !id narrows out undefined (noUncheckedIndexedAccess), isValidObjectId rejects malformed strings
-      if (!id || !mongoose.isValidObjectId(id)) {
+      if (typeof id !== "string" || !mongoose.isValidObjectId(id)) {
         sendError(res, 400, "Invalid user ID.");
         return;
       }
