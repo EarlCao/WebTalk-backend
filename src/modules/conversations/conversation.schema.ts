@@ -4,13 +4,13 @@ import { z } from "zod";
 
 export const CreateDirectConversationSchema = z.object({
   participantId: z
-    .string({ required_error: "participantId is required." })
+    .string({ error: (issue) => issue.input === undefined ? "participantId is required." : undefined })
     .regex(/^[a-f\d]{24}$/i, "participantId must be a valid MongoDB ObjectId."),
 });
 
 export const CreateGroupConversationSchema = z.object({
   name: z
-    .string({ required_error: "Group name is required." })
+    .string({ error: (issue) => issue.input === undefined ? "Group name is required." : undefined })
     .min(1, "Group name must not be empty.")
     .max(100, "Group name must not exceed 100 characters.")
     .trim(),
@@ -44,7 +44,7 @@ export const AddParticipantsSchema = z.object({
 
 export const RemoveParticipantSchema = z.object({
   participantId: z
-    .string({ required_error: "participantId is required." })
+    .string({ error: (issue) => issue.input === undefined ? "Group name is required." : undefined })
     .regex(/^[a-f\d]{24}$/i, "participantId must be a valid MongoDB ObjectId."),
 });
 

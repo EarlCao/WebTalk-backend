@@ -10,6 +10,7 @@ import type {
   GetConversationsQueryInput,
   UpdateGroupConversationInput,
 } from "./conversation.schema";
+import { IConversation } from "./conversation.model";
 
 const conversationRepository = new ConversationRepository();
 const userRepository = new UserRepository();
@@ -74,7 +75,7 @@ export class ConversationService {
       participants: allParticipants,
       createdBy: requesterOid,
       name: data.name,
-      avatar: data.avatar,
+      ...(data.avatar !== undefined && { avatar: data.avatar }),
     });
   }
 
@@ -132,7 +133,7 @@ export class ConversationService {
       throw new HttpError(400, "Only group conversations can be updated.");
     }
 
-    return conversationRepository.updateById(conversationId, data);
+    return conversationRepository.updateById(conversationId, data as Partial<Pick<IConversation, "name" | "avatar">>);
   }
 
   async addParticipants(
