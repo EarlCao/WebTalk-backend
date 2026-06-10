@@ -76,6 +76,14 @@ export class ConversationRepository {
     ).exec();
   }
 
+  async clearLastMessage(id: string): Promise<IConversation | null> {
+    return ConversationModel.findOneAndUpdate(
+      { _id: id, ...ACTIVE_FILTER },
+      { $unset: { lastMessage: "", lastMessageAt: "" } },
+      { new: true },
+    ).exec();
+  }
+
   async addParticipants(
     id: string,
     participantIds: Types.ObjectId[],

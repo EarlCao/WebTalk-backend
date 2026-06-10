@@ -146,10 +146,14 @@ export class MessageService {
     // If this was the conversation's lastMessage, update the pointer
     if (conversation.lastMessage?.toString() === messageId) {
       const latest = await messageRepository.findLatestByConversation(message.conversationId);
-      await conversationRepository.updateById(conversation.id as string, {
-        lastMessage: latest ? (latest._id as Types.ObjectId) : undefined,
-        lastMessageAt: latest ? latest.createdAt : undefined,
-      });
+      if (latest) {
+        await conversationRepository.updateById(conversation.id as string, {
+          lastMessage: latest._id as Types.ObjectId,
+          lastMessageAt: latest.createdAt,
+        });
+      } else {
+        await conversationRepository.clearLastMessage(conversation.id as string);
+      }
     }
 
     return deleted;
