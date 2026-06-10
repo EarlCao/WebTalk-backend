@@ -1,8 +1,8 @@
-import { Types } from "mongoose";
+import { QueryFilter, Types } from "mongoose";
 
 import { FriendModel, FriendRequestStatus, IFriend } from "./friend.model";
 
-const ACTIVE_FILTER = { deletedAt: null } as const;
+const ACTIVE_FILTER: QueryFilter<IFriend> = { deletedAt: null };
 
 export class FriendRepository {
   // ── Create ────────────────────────────────────────────────────────────────────
@@ -45,7 +45,11 @@ export class FriendRepository {
     skip: number,
     limit: number,
   ): Promise<{ requests: IFriend[]; total: number }> {
-    const filter = { addresseeId: userId, status: "pending", ...ACTIVE_FILTER };
+    const filter: QueryFilter<IFriend> = {
+      addresseeId: userId,
+      status: "pending",
+      ...ACTIVE_FILTER,
+    };
 
     const [requests, total] = await Promise.all([
       FriendModel.find(filter)
@@ -68,7 +72,11 @@ export class FriendRepository {
     skip: number,
     limit: number,
   ): Promise<{ requests: IFriend[]; total: number }> {
-    const filter = { requesterId: userId, status: "pending", ...ACTIVE_FILTER };
+    const filter: QueryFilter<IFriend> = {
+      requesterId: userId,
+      status: "pending",
+      ...ACTIVE_FILTER,
+    };
 
     const [requests, total] = await Promise.all([
       FriendModel.find(filter)
@@ -92,7 +100,7 @@ export class FriendRepository {
     skip: number,
     limit: number,
   ): Promise<{ friends: IFriend[]; total: number }> {
-    const filter = {
+    const filter: QueryFilter<IFriend> = {
       $or: [{ requesterId: userId }, { addresseeId: userId }],
       status: "accepted",
       ...ACTIVE_FILTER,
