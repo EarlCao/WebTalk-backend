@@ -13,7 +13,6 @@ export class MessageRepository {
     senderId: Types.ObjectId;
     content: SendMessageInput["content"];
     type: SendMessageInput["type"];
-    attachments?: SendMessageInput["attachments"];
   }): Promise<IMessage> {
     return MessageModel.create(data);
   }
