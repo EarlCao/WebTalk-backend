@@ -44,9 +44,8 @@ export class MessageService {
     const message = await messageRepository.create({
       conversationId: conversationOid,
       senderId: senderOid,
-      content: data.content,
+      content: data.content ?? "",
       type: data.type,
-      ...(data.attachments?.length ? { attachments: data.attachments } : {}),
     });
 
     // Keep the parent conversation's last-message pointer in sync

@@ -1,36 +1,18 @@
 import { Document, Schema, Types, model } from "mongoose";
 
-export type MessageType = "text" | "image" | "file" | "system";
-
-export interface IAttachment {
-  url: string;
-  name: string;
-  size: number;        // bytes
-  mimeType: string;
-}
+export type MessageType = "text" | "system";
 
 export interface IMessage extends Document {
   conversationId: Types.ObjectId;
   senderId: Types.ObjectId;
   content: string;
   type: MessageType;
-  attachments: IAttachment[];
   readBy: Types.ObjectId[];
   editedAt?: Date | null;
   deletedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
-
-const AttachmentSchema = new Schema<IAttachment>(
-  {
-    url: { type: String, required: true },
-    name: { type: String, required: true },
-    size: { type: Number, required: true },
-    mimeType: { type: String, required: true },
-  },
-  { _id: false },
-);
 
 const MessageSchema = new Schema<IMessage>(
   {
@@ -46,17 +28,13 @@ const MessageSchema = new Schema<IMessage>(
     },
     content: {
       type: String,
-      required: true,
       trim: true,
+      default: "",
     },
     type: {
       type: String,
-      enum: ["text", "image", "file", "system"],
+      enum: ["text", "system"],
       default: "text",
-    },
-    attachments: {
-      type: [AttachmentSchema],
-      default: [],
     },
     readBy: [
       {
