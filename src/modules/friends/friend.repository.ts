@@ -11,7 +11,12 @@ export class FriendRepository {
     requesterId: Types.ObjectId;
     addresseeId: Types.ObjectId;
   }): Promise<IFriend> {
-    return FriendModel.create(data);
+    const created = await FriendModel.create(data);
+    // Populate so the response shape matches every other read method.
+    return FriendModel.findById(created._id)
+      .populate("requesterId", "username avatar status")
+      .populate("addresseeId", "username avatar status")
+      .exec() as Promise<IFriend>;
   }
 
   // ── Read ──────────────────────────────────────────────────────────────────────

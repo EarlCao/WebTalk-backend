@@ -44,9 +44,19 @@ export class FriendService {
           // Return 403 without revealing who blocked whom
           throw new HttpError(403, "This action is not allowed.");
 
-        case "declined":
-          // Re-send: flip the existing declined document back to pending
+        case "declined": {
+          // If the current requester is the original addressee the direction is
+          // reversed — the stale document would have the wrong requesterId /
+          // addresseeId, which breaks accept / cancel ownership checks.
+          // Soft-delete the stale document and create a fresh one instead.
+          if (existing.requesterId.toString() !== requesterId) {
+            await friendRepository.softDeleteById(existing._id.toString());
+            return friendRepository.create({ requesterId: requesterOid, addresseeId: addresseeOid });
+          }
+
+          // Same direction — just reset the status to pending.
           return friendRepository.updateStatus(existing._id.toString(), "pending");
+        }
       }
     }
 

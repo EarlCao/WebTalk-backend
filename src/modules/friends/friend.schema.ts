@@ -15,8 +15,10 @@ export const SendFriendRequestSchema = z.object({
 // ── Query (shared for friends list + request lists) ───────────────────────────
 
 export const GetFriendsQuerySchema = z.object({
-  page: z.string().regex(/^\d+$/).optional().transform(Number).default(1),
-  limit: z.string().regex(/^\d+$/).optional().transform(Number).default(20),
+  // /^[1-9]\d*$/ rejects "0" and leading-zero strings, guaranteeing page >= 1
+  // so that (page - 1) * limit is never negative when passed to .skip().
+  page: z.string().regex(/^[1-9]\d*$/).optional().transform(Number).default(1),
+  limit: z.string().regex(/^[1-9]\d*$/).optional().transform(Number).default(20),
 });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
