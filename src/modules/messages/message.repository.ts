@@ -1,7 +1,6 @@
 import { Types } from "mongoose";
 
-import { IMessage, MessageModel } from "./message.model";
-import type { SendMessageInput } from "./message.schema";
+import { IMessage, MessageModel, MessageType } from "./message.model";
 
 const ACTIVE_FILTER = { deletedAt: null } as const;
 
@@ -11,8 +10,8 @@ export class MessageRepository {
   async create(data: {
     conversationId: Types.ObjectId;
     senderId: Types.ObjectId;
-    content: SendMessageInput["content"];
-    type: SendMessageInput["type"];
+    content: string;
+    type: MessageType;
   }): Promise<IMessage> {
     return MessageModel.create(data);
   }

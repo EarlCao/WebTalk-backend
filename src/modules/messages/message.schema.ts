@@ -12,7 +12,7 @@ export const SendMessageSchema = z.object({
     .max(5000, "Message content must not exceed 5 000 characters.")
     .trim(),
   type: z
-    .enum(["text", "system"])
+    .literal("text")
     .optional()
     .default("text"),
 });

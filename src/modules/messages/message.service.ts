@@ -44,7 +44,7 @@ export class MessageService {
     const message = await messageRepository.create({
       conversationId: conversationOid,
       senderId: senderOid,
-      content: data.content ?? "",
+      content: data.content,
       type: data.type,
     });
 
@@ -142,6 +142,9 @@ export class MessageService {
     }
 
     const deleted = await messageRepository.softDeleteById(messageId);
+    if (!deleted) {
+      throw new HttpError(404, "Message not found or already deleted.");
+    }
 
     // If this was the conversation's lastMessage, update the pointer
     if (conversation.lastMessage?.toString() === messageId) {

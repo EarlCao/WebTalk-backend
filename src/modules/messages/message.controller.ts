@@ -95,6 +95,10 @@ export class MessageController {
       }
 
       const message = await this.messageService.editMessage(requesterId, id, parsed.data);
+      if (!message) {
+        sendError(res, 404, "Message not found.");
+        return;
+      }
 
       sendSuccess(res, 200, "Message updated successfully.", message);
     } catch (error) {
@@ -151,6 +155,10 @@ export class MessageController {
       }
 
       const message = await this.messageService.markAsRead(requesterId, id);
+      if (!message) {
+        sendError(res, 404, "Message not found.");
+        return;
+      }
 
       sendSuccess(res, 200, "Message marked as read.", message);
     } catch (error) {
