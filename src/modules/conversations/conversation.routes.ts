@@ -1,27 +1,30 @@
 import { Router } from "express";
 
 import { authMiddleware } from "../../common/middleware/auth.middleware";
-import { ConversationController } from "./conversation.controller";
+import { asyncHandler } from "../../common/utils/async.handler";
+import { conversationController } from "./conversation.controller";
 
-const router = Router();
-const conversationController = new ConversationController();
+const conversationRouter = Router();
 
-// All conversation routes require a valid JWT
-router.get("/", authMiddleware, conversationController.getConversations);
-router.get("/:id", authMiddleware, conversationController.getConversationById);
+conversationRouter.use(authMiddleware);
 
-router.post("/direct", authMiddleware, conversationController.createDirect);
-router.post("/group", authMiddleware, conversationController.createGroup);
+conversationRouter.get("/", asyncHandler(conversationController.getConversations));
+conversationRouter.get("/:id", asyncHandler(conversationController.getConversationById));
 
-router.patch("/:id", authMiddleware, conversationController.updateGroup);
+conversationRouter.post("/direct", asyncHandler(conversationController.createDirect));
+conversationRouter.post("/group", asyncHandler(conversationController.createGroup));
 
-router.post("/:id/participants", authMiddleware, conversationController.addParticipants);
-router.delete(
+conversationRouter.patch("/:id", asyncHandler(conversationController.updateGroup));
+
+conversationRouter.post(
+  "/:id/participants",
+  asyncHandler(conversationController.addParticipants),
+);
+conversationRouter.delete(
   "/:id/participants/:participantId",
-  authMiddleware,
-  conversationController.removeParticipant,
+  asyncHandler(conversationController.removeParticipant),
 );
 
-router.delete("/:id", authMiddleware, conversationController.deleteConversation);
+conversationRouter.delete("/:id", asyncHandler(conversationController.deleteConversation));
 
-export const conversationRoutes = router;
+export default conversationRouter;

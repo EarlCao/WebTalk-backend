@@ -225,3 +225,5 @@ export class FriendController {
     }
   };
 }
+
+export const friendController = new FriendController();

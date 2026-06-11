@@ -1,18 +1,19 @@
 import { Router } from "express";
 
 import { authMiddleware } from "../../common/middleware/auth.middleware";
-import { MessageController } from "./message.controller";
+import { asyncHandler } from "../../common/utils/async.handler";
+import { messageController } from "./message.controller";
 
-const router = Router();
-const messageController = new MessageController();
+const messageRouter = Router();
 
-// All message routes require a valid JWT
-router.get("/", authMiddleware, messageController.getMessages);
-router.post("/", authMiddleware, messageController.sendMessage);
+messageRouter.use(authMiddleware);
 
-router.patch("/:id", authMiddleware, messageController.editMessage);
-router.delete("/:id", authMiddleware, messageController.deleteMessage);
+messageRouter.get("/", asyncHandler(messageController.getMessages));
+messageRouter.post("/", asyncHandler(messageController.sendMessage));
 
-router.post("/:id/read", authMiddleware, messageController.markAsRead);
+messageRouter.patch("/:id", asyncHandler(messageController.editMessage));
+messageRouter.delete("/:id", asyncHandler(messageController.deleteMessage));
 
-export const messageRoutes = router;
+messageRouter.post("/:id/read", asyncHandler(messageController.markAsRead));
+
+export default messageRouter;

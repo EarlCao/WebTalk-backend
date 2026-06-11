@@ -1,29 +1,29 @@
 import { Router } from "express";
 
 import { authMiddleware } from "../../common/middleware/auth.middleware";
-import { FriendController } from "./friend.controller";
+import { asyncHandler } from "../../common/utils/async.handler";
+import { friendController } from "./friend.controller";
 
-const router = Router();
-const friendController = new FriendController();
+const friendRouter = Router();
 
-// All friend routes require a valid JWT.
-//
+friendRouter.use(authMiddleware);
+
 // IMPORTANT: static sub-routes (/requests/incoming, /requests/outgoing, /requests)
 // are registered BEFORE the dynamic /:id route to prevent Express from treating
 // "requests" as a wildcard param value.
 
 // ── Friend requests ───────────────────────────────────────────────────────────
 
-router.get("/requests/incoming", authMiddleware, friendController.getIncomingRequests);
-router.get("/requests/outgoing", authMiddleware, friendController.getOutgoingRequests);
-router.post("/requests", authMiddleware, friendController.sendRequest);
-router.patch("/requests/:id/accept", authMiddleware, friendController.acceptRequest);
-router.patch("/requests/:id/decline", authMiddleware, friendController.declineRequest);
-router.delete("/requests/:id", authMiddleware, friendController.cancelRequest);
+friendRouter.get("/requests/incoming", asyncHandler(friendController.getIncomingRequests));
+friendRouter.get("/requests/outgoing", asyncHandler(friendController.getOutgoingRequests));
+friendRouter.post("/requests", asyncHandler(friendController.sendRequest));
+friendRouter.patch("/requests/:id/accept", asyncHandler(friendController.acceptRequest));
+friendRouter.patch("/requests/:id/decline", asyncHandler(friendController.declineRequest));
+friendRouter.delete("/requests/:id", asyncHandler(friendController.cancelRequest));
 
 // ── Friendship management ─────────────────────────────────────────────────────
 
-router.get("/", authMiddleware, friendController.getFriends);
-router.delete("/:id", authMiddleware, friendController.removeFriend);
+friendRouter.get("/", asyncHandler(friendController.getFriends));
+friendRouter.delete("/:id", asyncHandler(friendController.removeFriend));
 
-export const friendRoutes = router;
+export default friendRouter;

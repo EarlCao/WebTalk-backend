@@ -1,16 +1,17 @@
 import { Router } from "express";
 
 import { authMiddleware } from "../../common/middleware/auth.middleware";
-import { UserController } from "./user.controller";
+import { asyncHandler } from "../../common/utils/async.handler";
+import { userController } from "./user.controller";
 
-const router = Router();
-const userController = new UserController();
+const userRouter = Router();
 
-// All user routes require a valid JWT
-router.get("/me", authMiddleware, userController.getProfile);
-router.patch("/me", authMiddleware, userController.updateProfile);
-router.delete("/me", authMiddleware, userController.deleteAccount);
-router.get("/", authMiddleware, userController.searchUsers);
-router.get("/:id", authMiddleware, userController.getUserById);
+userRouter.use(authMiddleware);
 
-export const userRoutes = router;
+userRouter.get("/me", asyncHandler(userController.getProfile));
+userRouter.patch("/me", asyncHandler(userController.updateProfile));
+userRouter.delete("/me", asyncHandler(userController.deleteAccount));
+userRouter.get("/", asyncHandler(userController.searchUsers));
+userRouter.get("/:id", asyncHandler(userController.getUserById));
+
+export default userRouter;

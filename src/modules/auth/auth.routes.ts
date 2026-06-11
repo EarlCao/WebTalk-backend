@@ -1,13 +1,13 @@
 import { Router } from "express";
 
 import { authMiddleware } from "../../common/middleware/auth.middleware";
-import { AuthController } from "./auth.controller";
+import { asyncHandler } from "../../common/utils/async.handler";
+import { authController } from "./auth.controller";
 
-const router = Router();
-const authController = new AuthController();
+const authRouter = Router();
 
-router.post("/register", authController.register);
-router.post("/login", authController.login);
-router.post("/logout", authMiddleware, authController.logout);
+authRouter.post("/register", asyncHandler(authController.register));
+authRouter.post("/login", asyncHandler(authController.login));
+authRouter.post("/logout", authMiddleware, asyncHandler(authController.logout));
 
-export const authRoutes = router;
+export default authRouter;

@@ -1,18 +1,19 @@
 import { Router } from "express";
 
 import { authMiddleware } from "../../common/middleware/auth.middleware";
-import { NotificationController } from "./notification.controller";
+import { asyncHandler } from "../../common/utils/async.handler";
+import { notificationController } from "./notification.controller";
 
-const router = Router();
-const notificationController = new NotificationController();
+const notificationRouter = Router();
 
-// All notification routes require a valid JWT
-router.get("/", authMiddleware, notificationController.getNotifications);
+notificationRouter.use(authMiddleware);
+
+notificationRouter.get("/", asyncHandler(notificationController.getNotifications));
 
 // read-all must be before /:id so Express doesn't treat "read-all" as an id param
-router.patch("/read-all", authMiddleware, notificationController.markAllAsRead);
-router.patch("/:id/read", authMiddleware, notificationController.markAsRead);
+notificationRouter.patch("/read-all", asyncHandler(notificationController.markAllAsRead));
+notificationRouter.patch("/:id/read", asyncHandler(notificationController.markAsRead));
 
-router.delete("/:id", authMiddleware, notificationController.deleteNotification);
+notificationRouter.delete("/:id", asyncHandler(notificationController.deleteNotification));
 
-export const notificationRoutes = router;
+export default notificationRouter;
