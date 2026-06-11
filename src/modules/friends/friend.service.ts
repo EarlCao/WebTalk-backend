@@ -2,9 +2,25 @@ import mongoose, { Types } from "mongoose";
 
 import { HttpError } from "../../common/utils/http-error";
 import { FriendRepository } from "./friend.repository";
+import {
+  emitFriendRemoved,
+  emitFriendRequestAccepted,
+  emitFriendRequestCancelled,
+  emitFriendRequestDeclined,
+  emitFriendRequestSent,
+} from "./friend.socket";
 import type { GetFriendsQueryInput, SendFriendRequestInput } from "./friend.schema";
 
 const friendRepository = new FriendRepository();
+
+/**
+ * Shape of a populated user reference (requesterId / addresseeId after
+ * `.populate("...", "username avatar status")`).
+ */
+interface PopulatedUserRef {
+  _id: Types.ObjectId;
+  username: string;
+}
 
 export class FriendService {
   // ── Send request ──────────────────────────────────────────────────────────────
@@ -32,6 +48,8 @@ export class FriendService {
 
     const existing = await friendRepository.findBetween(requesterOid, addresseeOid);
 
+    let request: Awaited<ReturnType<typeof friendRepository.create>> | null = null;
+
     if (existing) {
       switch (existing.status) {
         case "accepted":
@@ -51,17 +69,36 @@ export class FriendService {
           // Soft-delete the stale document and create a fresh one instead.
           if (existing.requesterId.toString() !== requesterId) {
             await friendRepository.softDeleteById(existing._id.toString());
-            return friendRepository.create({ requesterId: requesterOid, addresseeId: addresseeOid });
+            request = await friendRepository.create({
+              requesterId: requesterOid,
+              addresseeId: addresseeOid,
+            });
+          } else {
+            // Same direction — just reset the status to pending.
+            request = await friendRepository.updateStatus(existing._id.toString(), "pending");
           }
-
-          // Same direction — just reset the status to pending.
-          return friendRepository.updateStatus(existing._id.toString(), "pending");
+          break;
         }
       }
+    } else {
+      // No active relationship — create a fresh request
+      request = await friendRepository.create({ requesterId: requesterOid, addresseeId: addresseeOid });
     }
 
-    // No active relationship — create a fresh request
-    return friendRepository.create({ requesterId: requesterOid, addresseeId: addresseeOid });
+    if (!request) {
+      throw new HttpError(404, "Friend request not found.");
+    }
+
+    const requesterRef = request.requesterId as unknown as PopulatedUserRef;
+
+    emitFriendRequestSent(data.addresseeId, {
+      requestId: request._id.toString(),
+      requesterId,
+      requesterUsername: requesterRef.username,
+      createdAt: request.createdAt.toISOString(),
+    });
+
+    return request;
   }
 
   // ── Incoming requests ─────────────────────────────────────────────────────────
@@ -120,7 +157,20 @@ export class FriendService {
       throw new HttpError(400, `Cannot accept a request with status "${request.status}".`);
     }
 
-    return friendRepository.updateStatus(requestId, "accepted");
+    const updated = await friendRepository.updateStatus(requestId, "accepted");
+    if (!updated) {
+      throw new HttpError(404, "Friend request not found.");
+    }
+
+    const addresseeRef = updated.addresseeId as unknown as PopulatedUserRef;
+
+    emitFriendRequestAccepted(request.requesterId.toString(), {
+      requestId: updated._id.toString(),
+      addresseeId: userId,
+      addresseeUsername: addresseeRef.username,
+    });
+
+    return updated;
   }
 
   // ── Decline request ───────────────────────────────────────────────────────────
@@ -143,7 +193,16 @@ export class FriendService {
       throw new HttpError(400, `Cannot decline a request with status "${request.status}".`);
     }
 
-    return friendRepository.updateStatus(requestId, "declined");
+    const updated = await friendRepository.updateStatus(requestId, "declined");
+    if (!updated) {
+      throw new HttpError(404, "Friend request not found.");
+    }
+
+    emitFriendRequestDeclined(request.requesterId.toString(), {
+      requestId: updated._id.toString(),
+    });
+
+    return updated;
   }
 
   // ── Cancel request ────────────────────────────────────────────────────────────
@@ -171,7 +230,16 @@ export class FriendService {
       throw new HttpError(400, "Only pending requests can be cancelled.");
     }
 
-    return friendRepository.softDeleteById(requestId);
+    const cancelled = await friendRepository.softDeleteById(requestId);
+    if (!cancelled) {
+      throw new HttpError(404, "Friend request not found.");
+    }
+
+    emitFriendRequestCancelled(request.addresseeId.toString(), {
+      requestId: cancelled._id.toString(),
+    });
+
+    return cancelled;
   }
 
   // ── Friends list ──────────────────────────────────────────────────────────────
@@ -220,6 +288,21 @@ export class FriendService {
       throw new HttpError(400, "You can only remove an accepted friendship.");
     }
 
-    return friendRepository.softDeleteById(friendshipId);
+    const removed = await friendRepository.softDeleteById(friendshipId);
+    if (!removed) {
+      throw new HttpError(404, "Friendship not found.");
+    }
+
+    const otherUserId =
+      friendship.requesterId.toString() === userId
+        ? friendship.addresseeId.toString()
+        : friendship.requesterId.toString();
+
+    emitFriendRemoved(otherUserId, {
+      friendshipId: removed._id.toString(),
+      removedById: userId,
+    });
+
+    return removed;
   }
 }
