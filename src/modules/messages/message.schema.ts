@@ -33,8 +33,8 @@ export const GetMessagesQuerySchema = z.object({
   conversationId: z
     .string({ error: (issue) => (issue.input === undefined ? "conversationId is required." : undefined) })
     .regex(/^[a-f\d]{24}$/i, "conversationId must be a valid MongoDB ObjectId."),
-  page: z.string().regex(/^\d+$/).optional().transform(Number).default(1),
-  limit: z.string().regex(/^\d+$/).optional().transform(Number).default(30),
+  page: z.string().regex(/^[1-9]\d*$/).optional().transform(Number).default(1),
+  limit: z.string().regex(/^[1-9]\d*$/).optional().transform(Number).default(30),
 });
 
 // ── Types ─────────────────────────────────────────────────────────────────────

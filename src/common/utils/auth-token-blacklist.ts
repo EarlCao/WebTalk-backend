@@ -11,9 +11,14 @@ const cleanupExpiredTokens = (blacklistedTokens: Map<string, number | null>): vo
 class AuthTokenBlacklist {
   private readonly blacklistedTokens = new Map<string, number | null>();
 
-  blacklistToken(token: string, expiresAtUnixSeconds?: number): void {
-    cleanupExpiredTokens(this.blacklistedTokens);
+  constructor() {
+    // Clean up expired tokens periodically (e.g., every 15 minutes)
+    setInterval(() => {
+      cleanupExpiredTokens(this.blacklistedTokens);
+    }, 15 * 60 * 1000).unref();
+  }
 
+  blacklistToken(token: string, expiresAtUnixSeconds?: number): void {
     const expiresAtInMs = typeof expiresAtUnixSeconds === "number"
       ? expiresAtUnixSeconds * 1000
       : null;
@@ -22,8 +27,6 @@ class AuthTokenBlacklist {
   }
 
   isTokenBlacklisted(token: string): boolean {
-    cleanupExpiredTokens(this.blacklistedTokens);
-
     const expiresAtInMs = this.blacklistedTokens.get(token);
 
     if (expiresAtInMs === undefined) {

@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export const SearchUsersQuerySchema = z.object({
   username: z.string().optional(),
-  page: z.string().regex(/^\d+$/).optional().transform(Number).default(1),
-  limit: z.string().regex(/^\d+$/).optional().transform(Number).default(10),
+  page: z.string().regex(/^[1-9]\d*$/).optional().transform(Number).default(1),
+  limit: z.string().regex(/^[1-9]\d*$/).optional().transform(Number).default(10),
 });
 
 export const UpdateProfileSchema = z.object({
