@@ -16,6 +16,23 @@ export type AppSocketServer = Server<
   SocketData
 >;
 
+// ── Socket registry ───────────────────────────────────────────────────────────
+
+let _io: AppSocketServer | null = null;
+
+export const setIo = (io: AppSocketServer): void => {
+  _io = io;
+};
+
+export const getIo = (): AppSocketServer => {
+  if (!_io) {
+    throw new Error("Socket.IO server has not been initialized. Call setIo() first.");
+  }
+  return _io;
+};
+
+// ── Factory ───────────────────────────────────────────────────────────────────
+
 export const createSocketServer = (httpServer: HttpServer): AppSocketServer => {
   return new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>(
     httpServer,

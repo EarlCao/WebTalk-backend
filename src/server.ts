@@ -3,13 +3,14 @@ import { createServer } from "node:http";
 import { createApp } from "./app";
 import { connectDatabase, disconnectDatabase } from "./config/db";
 import { env } from "./config/env";
-import { createSocketServer } from "./config/socket";
+import { createSocketServer, setIo } from "./config/socket";
 import { registerSocketHandlers } from "./socket/index";
 
 const app = createApp();
 const httpServer = createServer(app);
 const io = createSocketServer(httpServer);
 
+setIo(io);
 registerSocketHandlers(io);
 
 const shutdown = async (signal: NodeJS.Signals): Promise<void> => {

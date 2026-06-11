@@ -1,5 +1,6 @@
 import type { AppSocketServer } from "../config/socket";
 import type { SocketUserPayload } from "../common/types/socket.types";
+import { registerNotificationSocketHandlers } from "./notification.socket";
 
 const getSocketUserPayload = (
   socketId: string,
@@ -12,6 +13,10 @@ const getSocketUserPayload = (
 });
 
 export const registerSocketHandlers = (io: AppSocketServer): void => {
+  // ── Module handlers ───────────────────────────────────────────────────────────
+  registerNotificationSocketHandlers(io);
+
+  // ── Core handlers ─────────────────────────────────────────────────────────────
   io.on("connection", (socket) => {
     io.emit("userConnected", getSocketUserPayload(socket.id, socket.data.userId, socket.data.email));
 
