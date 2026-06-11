@@ -5,7 +5,7 @@ import {
   emitNotificationAllRead,
   emitNotificationRead,
   emitNotificationReceived,
-} from "../../socket/notification.socket";
+} from "./notification.socket";
 import type { NotificationType } from "./notification.model";
 import { NotificationRepository } from "./notification.repository";
 import type { GetNotificationsQueryInput } from "./notification.schema";
@@ -40,7 +40,7 @@ export class NotificationService {
       type: data.type,
       senderId: data.senderId,
       senderUsername: data.senderUsername,
-      referenceId: data.referenceId,
+      ...(data.referenceId ? { referenceId: data.referenceId } : {}),
       createdAt: notification.createdAt.toISOString(),
     });
 

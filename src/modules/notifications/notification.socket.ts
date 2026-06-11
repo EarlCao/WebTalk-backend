@@ -1,6 +1,6 @@
-import type { AppSocketServer } from "../config/socket";
-import { getIo } from "../config/socket";
-import type { NotificationSocketPayload } from "../common/types/socket.types";
+import type { AppSocketServer } from "../../config/socket";
+import { getIo } from "../../config/socket";
+import type { NotificationSocketPayload } from "../../common/types/socket.types";
 
 // ── Emitters ──────────────────────────────────────────────────────────────────
 
