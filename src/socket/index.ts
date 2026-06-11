@@ -1,6 +1,6 @@
 import type { AppSocketServer } from "../config/socket";
 import type { SocketUserPayload } from "../common/types/socket.types";
-import { registerNotificationSocketHandlers } from "./notification.socket";
+import { registerNotificationSocketHandlers } from "../modules/notifications/notification.socket";
 
 const getSocketUserPayload = (
   socketId: string,
