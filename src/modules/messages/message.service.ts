@@ -4,6 +4,12 @@ import { HttpError } from "../../common/utils/http-error";
 import { ConversationRepository } from "../conversations/conversation.repository";
 import { MessageRepository } from "./message.repository";
 import type { EditMessageInput, GetMessagesQueryInput, SendMessageInput } from "./message.schema";
+import {
+  emitMessageDeleted,
+  emitMessageEdited,
+  emitMessageRead,
+  emitMessageSent,
+} from "./message.socket";
 
 const messageRepository = new MessageRepository();
 const conversationRepository = new ConversationRepository();
@@ -54,6 +60,15 @@ export class MessageService {
       lastMessageAt: message.createdAt,
     });
 
+    emitMessageSent(data.conversationId, {
+      messageId: message._id.toString(),
+      conversationId: data.conversationId,
+      senderId: requesterId,
+      content: data.content,
+      type: data.type || "text",
+      createdAt: message.createdAt.toISOString(),
+    });
+
     return message;
   }
 
@@ -102,10 +117,21 @@ export class MessageService {
       throw new HttpError(400, "Only text messages can be edited.");
     }
 
-    return messageRepository.updateById(messageId, {
+    const updatedMessage = await messageRepository.updateById(messageId, {
       content: data.content,
       editedAt: new Date(),
     });
+
+    if (updatedMessage) {
+      emitMessageEdited(message.conversationId.toString(), {
+        messageId: messageId,
+        conversationId: message.conversationId.toString(),
+        content: data.content,
+        editedAt: updatedMessage.editedAt!.toISOString(),
+      });
+    }
+
+    return updatedMessage;
   }
 
   // ── Delete ───────────────────────────────────────────────────────────────────
@@ -149,16 +175,21 @@ export class MessageService {
     // If this was the conversation's lastMessage, update the pointer
     if (conversation.lastMessage?.toString() === messageId) {
       const latest = await messageRepository.findLatestByConversation(message.conversationId);
-      const conversationId = message.conversationId.toString();
+      const conversationIdStr = message.conversationId.toString();
       if (latest) {
-        await conversationRepository.updateById(conversationId, {
+        await conversationRepository.updateById(conversationIdStr, {
           lastMessage: latest._id as Types.ObjectId,
           lastMessageAt: latest.createdAt,
         });
       } else {
-        await conversationRepository.clearLastMessage(conversationId);
+        await conversationRepository.clearLastMessage(conversationIdStr);
       }
     }
+
+    emitMessageDeleted(message.conversationId.toString(), {
+      messageId: messageId,
+      conversationId: message.conversationId.toString(),
+    });
 
     return deleted;
   }
@@ -178,6 +209,16 @@ export class MessageService {
     // Ensure the requester is a member of the conversation
     await this.resolveConversationForMember(requesterId, message.conversationId.toString());
 
-    return messageRepository.markAsRead(messageId, new Types.ObjectId(requesterId));
+    const updatedMessage = await messageRepository.markAsRead(messageId, new Types.ObjectId(requesterId));
+
+    if (updatedMessage) {
+      emitMessageRead(message.conversationId.toString(), {
+        messageId: messageId,
+        conversationId: message.conversationId.toString(),
+        readerId: requesterId,
+      });
+    }
+
+    return updatedMessage;
   }
 }

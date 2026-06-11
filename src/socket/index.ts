@@ -32,13 +32,6 @@ export const registerSocketHandlers = (io: AppSocketServer): void => {
       void socket.leave(roomId);
     });
 
-    socket.on("sendMessage", (payload) => {
-      io.to(payload.roomId).emit("messageReceived", {
-        ...payload,
-        socketId: socket.id,
-        sentAt: new Date().toISOString(),
-      });
-    });
 
     socket.on("disconnect", () => {
       io.emit("userDisconnected", getSocketUserPayload(socket.id, socket.data.userId, socket.data.email));
