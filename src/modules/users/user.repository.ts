@@ -26,6 +26,14 @@ export class UserRepository {
     ).exec();
   }
 
+  async updateStatus(id: string, status: string, lastSeen: Date): Promise<IUser | null> {
+    return UserModel.findOneAndUpdate(
+      { _id: id, ...ACTIVE_FILTER },
+      { $set: { status, lastSeen } },
+      { new: true }
+    ).exec();
+  }
+
   async softDeleteById(id: string): Promise<IUser | null> {
     return UserModel.findOneAndUpdate(
       { _id: id, ...ACTIVE_FILTER },

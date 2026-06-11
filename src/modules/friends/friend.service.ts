@@ -45,6 +45,7 @@ export class FriendService {
 
     const requesterOid = new Types.ObjectId(requesterId);
     const addresseeOid = new Types.ObjectId(data.addresseeId);
+    const pairId = [requesterId, data.addresseeId].sort().join("_");
 
     const existing = await friendRepository.findBetween(requesterOid, addresseeOid);
 
@@ -72,6 +73,7 @@ export class FriendService {
             request = await friendRepository.create({
               requesterId: requesterOid,
               addresseeId: addresseeOid,
+              pairId,
             });
           } else {
             // Same direction — just reset the status to pending.
@@ -82,7 +84,7 @@ export class FriendService {
       }
     } else {
       // No active relationship — create a fresh request
-      request = await friendRepository.create({ requesterId: requesterOid, addresseeId: addresseeOid });
+      request = await friendRepository.create({ requesterId: requesterOid, addresseeId: addresseeOid, pairId });
     }
 
     if (!request) {
@@ -90,6 +92,10 @@ export class FriendService {
     }
 
     const requesterRef = request.requesterId as unknown as PopulatedUserRef;
+
+    if (typeof requesterRef?.username !== "string") {
+      throw new HttpError(500, "Internal error: Failed to populate requester username.");
+    }
 
     emitFriendRequestSent(data.addresseeId, {
       requestId: request._id.toString(),
@@ -163,6 +169,10 @@ export class FriendService {
     }
 
     const addresseeRef = updated.addresseeId as unknown as PopulatedUserRef;
+
+    if (typeof addresseeRef?.username !== "string") {
+      throw new HttpError(500, "Internal error: Failed to populate addressee username.");
+    }
 
     emitFriendRequestAccepted(request.requesterId.toString(), {
       requestId: updated._id.toString(),

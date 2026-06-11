@@ -10,6 +10,7 @@ export class FriendRepository {
   async create(data: {
     requesterId: Types.ObjectId;
     addresseeId: Types.ObjectId;
+    pairId: string;
   }): Promise<IFriend> {
     const created = await FriendModel.create(data);
     // Populate so the response shape matches every other read method.

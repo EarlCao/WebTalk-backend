@@ -39,6 +39,11 @@ export const errorMiddleware: ErrorRequestHandler = (error, request, response, n
     return;
   }
 
+  if ((error as any)?.code === 11000) {
+    sendError(response, 409, "A resource with that value already exists.");
+    return;
+  }
+
   const message = request.app.get("env") === "production" ? "Internal server error." : getErrorMessage(error);
   sendError(response, 500, message);
 };

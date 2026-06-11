@@ -5,6 +5,7 @@ export type FriendRequestStatus = "pending" | "accepted" | "declined" | "blocked
 export interface IFriend extends Document {
   requesterId: Types.ObjectId;
   addresseeId: Types.ObjectId;
+  pairId: string;
   status: FriendRequestStatus;
   deletedAt?: Date | null;
   createdAt: Date;
@@ -21,6 +22,10 @@ const FriendSchema = new Schema<IFriend>(
     addresseeId: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
+    },
+    pairId: {
+      type: String,
       required: true,
     },
     status: {
@@ -42,7 +47,7 @@ const FriendSchema = new Schema<IFriend>(
 // partialFilterExpression means soft-deleted records are excluded from the constraint,
 // so users can re-send after a cancel/unfriend.
 FriendSchema.index(
-  { requesterId: 1, addresseeId: 1 },
+  { pairId: 1 },
   { unique: true, partialFilterExpression: { deletedAt: null } },
 );
 

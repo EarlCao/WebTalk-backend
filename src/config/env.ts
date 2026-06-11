@@ -73,10 +73,10 @@ export const env = {
     .map((value) => value.trim())
     .filter(Boolean),
   DB_CONNECTION: dbConnection as DbConnection,
-  DB_HOST: getRequiredEnv("DB_HOST"),
+  DB_HOST: getOptionalEnv("DB_HOST") ?? "",
   DB_USER: process.env.DB_USER ?? "",
   DB_PASS: process.env.DB_PASS ?? "",
-  DB_NAME: getRequiredEnv("DB_NAME"),
+  DB_NAME: getOptionalEnv("DB_NAME") ?? "",
   DB_PORT: mongoPort,
   MONGO_URI: mongoUri,
   MONGODB_URI: mongoUri,

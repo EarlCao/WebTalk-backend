@@ -11,6 +11,13 @@ import type {
   UpdateGroupConversationInput,
 } from "./conversation.schema";
 import { IConversation } from "./conversation.model";
+import {
+  emitConversationCreated,
+  emitConversationDeleted,
+  emitConversationUpdated,
+  emitParticipantAdded,
+  emitParticipantRemoved,
+} from "./conversation.socket";
 
 const conversationRepository = new ConversationRepository();
 const userRepository = new UserRepository();
@@ -41,11 +48,24 @@ export class ConversationService {
     );
     if (existing) return existing;
 
-    return conversationRepository.create({
+    const conversation = await conversationRepository.create({
       type: "direct",
       participants: [requesterOid, participantOid],
       createdBy: requesterOid,
     });
+
+    emitConversationCreated(
+      [requesterId, data.participantId],
+      {
+        conversationId: conversation._id.toString(),
+        type: "direct",
+        createdBy: requesterId,
+        participants: [requesterId, data.participantId],
+        createdAt: conversation.createdAt.toISOString(),
+      }
+    );
+
+    return conversation;
   }
 
   async createGroupConversation(
@@ -70,13 +90,29 @@ export class ConversationService {
       ...participantOids.filter((oid) => !oid.equals(requesterOid)),
     ];
 
-    return conversationRepository.create({
+    const conversation = await conversationRepository.create({
       type: "group",
       participants: allParticipants,
       createdBy: requesterOid,
       name: data.name,
       ...(data.avatar !== undefined && { avatar: data.avatar }),
     });
+
+    const participantStrs = allParticipants.map(p => p.toString());
+    emitConversationCreated(
+      participantStrs,
+      {
+        conversationId: conversation._id.toString(),
+        type: "group",
+        name: data.name,
+        ...(data.avatar !== undefined && { avatar: data.avatar }),
+        createdBy: requesterId,
+        participants: participantStrs,
+        createdAt: conversation.createdAt.toISOString(),
+      }
+    );
+
+    return conversation;
   }
 
   // ── Read ─────────────────────────────────────────────────────────────────────
@@ -133,7 +169,15 @@ export class ConversationService {
       throw new HttpError(400, "Only group conversations can be updated.");
     }
 
-    return conversationRepository.updateById(conversationId, data as Partial<Pick<IConversation, "name" | "avatar">>);
+    const updated = await conversationRepository.updateById(conversationId, data as Partial<Pick<IConversation, "name" | "avatar">>);
+    if (updated) {
+      emitConversationUpdated(conversationId, {
+        conversationId,
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.avatar !== undefined && { avatar: data.avatar }),
+      });
+    }
+    return updated;
   }
 
   async addParticipants(
@@ -147,6 +191,10 @@ export class ConversationService {
       throw new HttpError(400, "Participants can only be added to group conversations.");
     }
 
+    if (conversation.participants.length + data.participantIds.length > 50) {
+      throw new HttpError(400, "A group conversation can have at most 50 participants (including yourself).");
+    }
+
     const participantOids: Types.ObjectId[] = [];
     for (const id of data.participantIds) {
       const user = await userRepository.findById(id);
@@ -156,7 +204,14 @@ export class ConversationService {
       participantOids.push(new Types.ObjectId(id));
     }
 
-    return conversationRepository.addParticipants(conversationId, participantOids);
+    const updated = await conversationRepository.addParticipants(conversationId, participantOids);
+    if (updated) {
+      emitParticipantAdded(conversationId, {
+        conversationId,
+        participantIds: data.participantIds,
+      });
+    }
+    return updated;
   }
 
   async removeParticipant(
@@ -190,10 +245,17 @@ export class ConversationService {
       );
     }
 
-    return conversationRepository.removeParticipant(
+    const updated = await conversationRepository.removeParticipant(
       conversationId,
       new Types.ObjectId(participantId),
     );
+    if (updated) {
+      emitParticipantRemoved(conversationId, {
+        conversationId,
+        participantId,
+      });
+    }
+    return updated;
   }
 
   // ── Delete ───────────────────────────────────────────────────────────────────
@@ -205,6 +267,10 @@ export class ConversationService {
       throw new HttpError(403, "Only the conversation creator can delete it.");
     }
 
-    return conversationRepository.softDeleteById(conversationId);
+    const deleted = await conversationRepository.softDeleteById(conversationId);
+    if (deleted) {
+      emitConversationDeleted(conversationId, { conversationId });
+    }
+    return deleted;
   }
 }

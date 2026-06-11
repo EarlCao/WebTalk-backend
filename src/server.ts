@@ -16,9 +16,11 @@ registerSocketHandlers(io);
 const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
   console.log(`${signal} received. Shutting down server...`);
 
-  httpServer.close(async () => {
-    await disconnectDatabase();
-    process.exit(0);
+  io.close(() => {
+    httpServer.close(async () => {
+      await disconnectDatabase();
+      process.exit(0);
+    });
   });
 };
 

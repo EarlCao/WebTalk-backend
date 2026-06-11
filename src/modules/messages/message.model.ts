@@ -57,7 +57,7 @@ const MessageSchema = new Schema<IMessage>(
 );
 
 // Fetch messages for a conversation, sorted by newest first
-MessageSchema.index({ conversationId: 1, createdAt: -1 });
+MessageSchema.index({ conversationId: 1, deletedAt: 1, createdAt: -1 });
 // Speed up sender-based queries (edit / delete ownership checks)
 MessageSchema.index({ senderId: 1 });
 
